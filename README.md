@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Task Planner - Gestão de Tarefas (Local)
 
 Um aplicativo web moderno para gestão de tarefas com design minimalista baseado no estilo planner diário, funcionando **100% local** com **localStorage**.
@@ -197,3 +198,6 @@ npm run eject    # Eject do Create React App
 ---
 
 **🎊 Task Planner Local está pronto!** Aplicativo completo com design minimalista, funcionalidades avançadas e **armazenamento 100% local** - sem necessidade de configurações externas! 🚀
+=======
+# Task-Planner
+>>>>>>> bce9fb850b43279f90503e25aa9fb98176214321
