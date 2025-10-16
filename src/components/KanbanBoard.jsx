@@ -86,10 +86,10 @@ function KanbanBoard({ tasks, onEditTask, onDeleteTask, onUpdateTaskStatus }) {
     <>
       <div className="kanban-container" style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '2rem',
+        gridTemplateColumns: 'repeat(3, minmax(300px, 1fr))',
+        gap: '1.5rem',
         width: '100%',
-        maxWidth: '100%',
+        maxWidth: '1200px',
         margin: '0 auto',
         padding: '0 2rem'
       }}>
@@ -288,13 +288,6 @@ function KanbanBoard({ tasks, onEditTask, onDeleteTask, onUpdateTaskStatus }) {
             opacity: 0.8;
             transform: rotate(2deg) scale(1.02);
             box-shadow: 0 8px 20px rgba(247, 191, 216, 0.3);
-          }
-
-          @media (max-width: 1200px) {
-            .kanban-container {
-              grid-template-columns: 1fr !important;
-              gap: 1.5rem !important;
-            }
           }
         `}
       </style>

@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import localAuth from '../localAuth';
 import TaskList from './TaskList';
 import KanbanBoard from './KanbanBoard';
 import Calendar from './Calendar';
 import TaskModal from './TaskModal';
 
-function Dashboard({ tasks, currentView, onViewChange, onSaveTask, onDeleteTask, onUpdateTaskStatus }) {
+function Dashboard({ tasks, setTasks, currentView, onViewChange, onSaveTask, onDeleteTask, onUpdateTaskStatus }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -12,7 +13,7 @@ function Dashboard({ tasks, currentView, onViewChange, onSaveTask, onDeleteTask,
   const [editingTask, setEditingTask] = useState(null);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
+    const result = tasks.filter(task => {
       // Verificações de segurança para evitar erros com propriedades undefined
       const title = task.title || '';
       const description = task.description || '';
@@ -27,7 +28,31 @@ function Dashboard({ tasks, currentView, onViewChange, onSaveTask, onDeleteTask,
 
       return matchesSearch && matchesPriority && matchesStatus;
     });
+    console.log('Filtered tasks:', result); // Debug: Check filtered results
+    return result;
   }, [tasks, searchTerm, priorityFilter, statusFilter]);
+
+  const loadTasks = () => {
+    // Get demo user (first user created)
+    const users = localAuth.getUsers();
+    const demoUser = users[0];
+
+    if (demoUser) {
+      const userTasks = localAuth.getTasks(demoUser.id);
+      setTasks(userTasks);
+    }
+  };
+
+  useEffect(() => {
+    // Initialize local auth service
+    localAuth.initialize();
+
+    // Cleanup old completed tasks (older than 3 days)
+    localAuth.cleanupOldCompletedTasks();
+
+    // Load tasks from localStorage
+    loadTasks();
+  }, []);
 
   const handleAddTask = () => {
     setEditingTask(null);
@@ -78,60 +103,54 @@ function Dashboard({ tasks, currentView, onViewChange, onSaveTask, onDeleteTask,
     <>
       <main className="main-content">
         {/* Navigation Tabs - Compact Widget Style */}
-        <div className="planner-card" style={{
-          gridColumn: '1 / -1',
-          padding: '2rem',
+        <div className="nav-tabs" style={{
+          display: 'flex',
+          gap: '1rem',
+          justifyContent: 'center',
           marginBottom: '2rem'
         }}>
-          <div className="nav-tabs" style={{
-            display: 'flex',
-            gap: '1rem',
-            justifyContent: 'center',
-            marginBottom: '0'
-          }}>
-            <button
-              className={`btn ${currentView === 'list' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => onViewChange('list')}
-              style={{
-                fontSize: '1rem',
-                padding: '1rem 2rem',
-                borderRadius: '25px',
-                fontWeight: '600'
-              }}
-            >
-              📋 Lista
-            </button>
-            <button
-              className={`btn ${currentView === 'kanban' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => onViewChange('kanban')}
-              style={{
-                fontSize: '1rem',
-                padding: '1rem 2rem',
-                borderRadius: '25px',
-                fontWeight: '600'
-              }}
-            >
-              📊 Kanban
-            </button>
-            <button
-              className={`btn ${currentView === 'calendar' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => onViewChange('calendar')}
-              style={{
-                fontSize: '1rem',
-                padding: '1rem 2rem',
-                borderRadius: '25px',
-                fontWeight: '600'
-              }}
-            >
-              📅 Calendário
-            </button>
-          </div>
+          <button
+            className={`btn ${currentView === 'list' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => onViewChange('list')}
+            style={{
+              fontSize: '1rem',
+              padding: '1rem 2rem',
+              borderRadius: '25px',
+              fontWeight: '600'
+            }}
+          >
+            📋 Lista
+          </button>
+          <button
+            className={`btn ${currentView === 'kanban' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => onViewChange('kanban')}
+            style={{
+              fontSize: '1rem',
+              padding: '1rem 2rem',
+              borderRadius: '25px',
+              fontWeight: '600'
+            }}
+          >
+            📊 Kanban
+          </button>
+          <button
+            className={`btn ${currentView === 'calendar' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => onViewChange('calendar')}
+            style={{
+              fontSize: '1rem',
+              padding: '1rem 2rem',
+              borderRadius: '25px',
+              fontWeight: '600'
+            }}
+          >
+            📅 Calendário
+          </button>
         </div>
 
         {/* Search and Filters - Compact Layout */}
         <div className="planner-card" style={{
           gridColumn: '1 / -1',
-          padding: '2rem',
+          padding: '1.5rem',
           marginBottom: '2rem'
         }}>
           <div style={{
@@ -196,6 +215,63 @@ function Dashboard({ tasks, currentView, onViewChange, onSaveTask, onDeleteTask,
                 <option value="done">✅ Concluída</option>
               </select>
             </div>
+          </div>
+
+          {/* Filtered Tasks Summary */}
+          <div style={{
+            marginTop: '1rem',
+            padding: '1rem',
+            background: 'rgba(247, 191, 216, 0.05)',
+            borderRadius: '12px',
+            border: '1px solid var(--color-border)'
+          }}>
+            <div style={{
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: 'var(--color-text-secondary)',
+              marginBottom: '0.5rem'
+            }}>
+              📋 Tarefas Filtradas ({filteredTasks.length})
+            </div>
+            {filteredTasks.length > 0 ? (
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                maxHeight: '100px',
+                overflowY: 'auto'
+              }}>
+                {filteredTasks.slice(0, 5).map(task => (
+                  <div key={task.id} style={{
+                    fontSize: '0.8rem',
+                    padding: '0.5rem 0.75rem',
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '8px',
+                    color: 'var(--color-text-primary)'
+                  }}>
+                    {task.title}
+                  </div>
+                ))}
+                {filteredTasks.length > 5 && (
+                  <div style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--color-text-secondary)',
+                    fontStyle: 'italic'
+                  }}>
+                    ... e mais {filteredTasks.length - 5}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{
+                fontSize: '0.8rem',
+                color: 'var(--color-text-secondary)',
+                fontStyle: 'italic'
+              }}>
+                Nenhuma tarefa encontrada.
+              </div>
+            )}
           </div>
         </div>
 

@@ -11,8 +11,12 @@ class LocalAuthService {
   // Initialize with demo user if no users exist
   initialize() {
     const users = this.getUsers();
+    console.log('Initializing localAuth, current users:', users); // Debug: Check existing users
     if (users.length === 0) {
       this.createUser('demo@taskplanner.com', 'demo123', 'Demo User');
+      console.log('Demo user created'); // Debug: Confirm creation
+    } else {
+      console.log('Demo user already exists'); // Debug: If already there
     }
   }
 
@@ -127,6 +131,27 @@ class LocalAuthService {
     const allTasks = this.getAllTasks();
     const filteredTasks = allTasks.filter(task => task.id !== taskId);
     localStorage.setItem(this.TASKS_KEY, JSON.stringify(filteredTasks));
+  }
+
+  // Automatically delete completed tasks older than 3 days
+  cleanupOldCompletedTasks() {
+    const allTasks = this.getAllTasks();
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const filteredTasks = allTasks.filter(task => {
+      if (task.status === 'done') {
+        const taskDate = new Date(task.updatedAt || task.createdAt);
+        return taskDate > threeDaysAgo; // Keep if not older than 3 days
+      }
+      return true; // Keep non-completed tasks
+    });
+
+    if (filteredTasks.length !== allTasks.length) {
+      localStorage.setItem(this.TASKS_KEY, JSON.stringify(filteredTasks));
+      return true; // Indicate that some tasks were deleted
+    }
+    return false;
   }
 
   // Import/Export functionality

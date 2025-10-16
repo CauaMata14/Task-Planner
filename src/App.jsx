@@ -36,11 +36,15 @@ function App() {
   const loadTasks = () => {
     // Get demo user (first user created)
     const users = localAuth.getUsers();
+    console.log('Users loaded:', users); // Debug: Check if users exist
     const demoUser = users[0];
 
     if (demoUser) {
       const userTasks = localAuth.getTasks(demoUser.id);
+      console.log('Tasks loaded for user:', userTasks); // Debug: Check loaded tasks
       setTasks(userTasks);
+    } else {
+      console.log('No demo user found'); // Debug: If no user
     }
   };
 
@@ -94,6 +98,7 @@ function App() {
       />
       <Dashboard
         tasks={tasks}
+        setTasks={setTasks}
         currentView={currentView}
         onViewChange={setCurrentView}
         onSaveTask={saveTask}
