@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  subscription  Subscription?
+  planners      Planner[]
+}
+
+model Subscription {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
+  
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  stripePriceId     String?
+  status           String   // active, canceled, past_due
+  
+  planType         String   // free, premium
+  currentPeriodEnd DateTime?
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Planner {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  date        DateTime
+  
+  weather     String?
+  temperature String?
+  
+  tasks       Task[]
+  appointments Appointment[]
+  waterIntakes WaterIntake[]
+  finances     Finance[]
+  goals        Goal[]
+  moods        Mood[]
+  notes        Note[]
+  
+  tomorrowPlan String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([userId, date])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  plannerId   String
+  planner     Planner  @relation(fields: [plannerId], references: [id])
+  
+  title       String
+  description String?
+  completed   Boolean  @default(false)
+  priority    String   // low, medium, high
+  order       Int
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  plannerId   String
+  planner     Planner  @relation(fields: [plannerId], references: [id])
+  
+  title       String
+  time        String
+  duration    Int?
+  completed   Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WaterIntake {
+  id          String   @id @default(cuid())
+  plannerId   String
+  planner     Planner  @relation(fields: [plannerId], references: [id])
+  
+  amount      Int      // in ml
+  time        DateTime
+  
+  createdAt   DateTime @default(now())
+}
+
+model Finance {
+  id          String   @id @default(cuid())
+  plannerId   String
+  planner     Planner  @relation(fields: [plannerId], references: [id])
+  
+  type        String   // income, expense
+  category    String
+  amount      Float
+  description String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  plannerId   String
+  planner     Planner  @relation(fields: [plannerId], references: [id])
+  
+  title       String
+  completed   Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Mood {
+  id          String   @id @default(cuid())
+  plannerId   String
+  planner     Planner  @relation(fields: [plannerId], references: [id])
+  
+  mood        String   // happy, sad, neutral, anxious, productive
+  note        String?
+  time        DateTime
+  
+  createdAt   DateTime @default(now())
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  plannerId   String
+  planner     Planner  @relation(fields: [plannerId], references: [id])
+  
+  content     String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
